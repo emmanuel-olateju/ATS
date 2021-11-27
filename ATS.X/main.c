@@ -28,10 +28,13 @@
 
 int phcnADCvalue=0;
 int generatorADCvalue=0;
-int switched=0;
+int switched=1;
 //int toggle=0;
 #define phcnControl RD2
 #define generatorControl RD3
+#define neutralLineControl RC4
+int phcnON=0;
+int generatorON=0;
 #define servo RC2
 #define thresh 920
 
@@ -47,22 +50,53 @@ void main(void) {
     PORTD=0x00;  
     TRISC=0x00;
     
+//    for(int i=0;i<50;i++){
+//        RC2=1;
+//        __delay_us(2000);
+//        RC2=0;
+//        __delay_us(18000);
+//    }
+//    __delay_ms(1000);
+//    for(int i=0;i<50;i++){
+//        RC2=1;
+//        __delay_us(1500);
+//        RC2=0;
+//        __delay_us(18500);
+//    }
+//    __delay_ms(1000);
+//    for(int i=0;i<50;i++){
+//        RC2=1;
+//        __delay_us(1000);
+//        RC2=0;
+//        __delay_us(19000);
+//    }
+//    __delay_ms(1000);
+    
     config();
     CLRDISP();
     CLRDISP();
     CURSOR(FIRSTROW,3);
     LCDWRITE("ATS SYSTEM");
     
+    neutralLineControl=0;   //to be 0 when source is PHCN and 1 when sourcer is generator
+    phcnControl=0;
+//    generatorControl=1;
+//    __delay_ms(3000);
+    generatorControl=0;
+    
     
     while(1){
+        CLRDISP();
+        CURSOR(FIRSTROW,3);
+        LCDWRITE("ATS SYSTEM");
          __delay_ms(100);
-        ADCON0bits.CHS=0;
+        ADCON0bits.CHS=1;
          __delay_us(20);
         ADCON0bits.GO_nDONE=1;
         while(ADCON0bits.GO_nDONE);
         phcnADCvalue=(ADRESH<<8)+ADRESL;
         __delay_us(100);
-        ADCON0bits.CHS=1;
+        ADCON0bits.CHS=0;
          __delay_us(20);
         ADCON0bits.GO_nDONE=1;
         while(ADCON0bits.GO_nDONE);
@@ -70,10 +104,16 @@ void main(void) {
         __delay_us(100);
         
         if(phcnADCvalue<920){
-            phcnControl=1;
-            generatorControl=0;
-            CURSOR(SECONDROW,0);
-            LCDWRITE("phcn     ");
+            //source is phcn
+            if(phcnON==0){
+                generatorControl=0;//first of all turn off all disconnect from all source and then set neutral to phcn-neutral
+                phcnControl=0;
+                neutralLineControl=0;//set set neutral to phcn-neutral
+                __delay_ms(250);
+                phcnControl=1;//set live to phcn live
+                phcnON=1;
+                generatorON=0;
+            }
             /*
              * +
              * 1.switch choke
@@ -81,52 +121,46 @@ void main(void) {
              * 3.if generator has turned off return choke
              */
             if(switched>=1){//to switch off gen by turning servo to turn off choke
-                switched=0;RC2=1;
+                switched=0;
                 for(int i=0;i<50;i++){
                     RC2=1;
                     __delay_us(2000);
                     RC2=0;
                     __delay_us(18000);
                 }
-                
             }
+            CURSOR(SECONDROW,0);
+            LCDWRITE("phcn");
             __delay_ms(2500);
             RC3=1;
-            ADCON0bits.CHS=1;
-             __delay_us(20);
-            ADCON0bits.GO_nDONE=1;
-            while(ADCON0bits.GO_nDONE);
-            generatorADCvalue=(ADRESH<<8)+ADRESL;
-            __delay_us(100);
-            if(generatorADCvalue>=920){
-                for(int i=0;i<50;i++){
-                    RC2=1;
-                    __delay_us(1000);
-                    RC2=0;
-                    __delay_us(19000);
-                }
-                
-            }
         }else{
             phcnControl=0;
-            generatorControl=0;
             if(generatorADCvalue<920){
-                for(int i=0;i<50;i++){
-                    RC2=1;
-                    __delay_us(1000);
-                    RC2=0;
-                    __delay_us(19000);
+                if(generatorON==0){
+                    generatorControl=0;//first of all turn off all disconnect from all source and then set neutral to generator-neutral
+                    phcnControl=0;
+                    neutralLineControl=1;//set set neutral to generator-neutral
+                    __delay_ms(250);
+                    generatorControl=1;//set live to generator live
+                    generatorON=1;
+                    phcnON=0;
+                    for(int i=0;i<50;i++){//to activate choke so gen can turn on later
+                        RC2=1;
+                        __delay_us(1000);
+                        RC2=0;
+                        __delay_us(19000);
+                    }
+                    switched=1;
                 }
-                
-                switched=1;
-                generatorControl=1;
                 CURSOR(SECONDROW,0);
                 LCDWRITE("generator");
+                __delay_ms(2500);
             }else{
                 CURSOR(SECONDROW,0);
-                LCDWRITE("null     ");
+                LCDWRITE("null");
             }
         }
+        __delay_ms(100);
     }
     __delay_ms(250);
     return;

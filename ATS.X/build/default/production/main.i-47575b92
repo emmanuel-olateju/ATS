@@ -2066,7 +2066,7 @@ void config()
 
 int phcnADCvalue=0;
 int generatorADCvalue=0;
-int switched=1;
+int switched=0;
 
 
 
@@ -2130,6 +2130,8 @@ void main(void) {
                 phcnON=1;
                 generatorON=0;
             }
+            CURSOR(0xC0,0);
+            LCDWRITE("phcn");
 
 
 
@@ -2140,19 +2142,56 @@ void main(void) {
                 switched=0;
                 for(int i=0;i<50;i++){
                     RC2=1;
+                    _delay((unsigned long)((1000)*(20000000/4000000.0)));
+                    RC2=0;
+                    _delay((unsigned long)((19000)*(20000000/4000000.0)));
+                }
+                _delay((unsigned long)((1000)*(20000000/4000.0)));
+                for(int i=0;i<50;i++){
+                    RC2=1;
+                    _delay((unsigned long)((1500)*(20000000/4000000.0)));
+                    RC2=0;
+                    _delay((unsigned long)((18500)*(20000000/4000000.0)));
+                }
+                _delay((unsigned long)((1000)*(20000000/4000.0)));
+                for(int i=0;i<50;i++){
+                    RC2=1;
                     _delay((unsigned long)((2000)*(20000000/4000000.0)));
                     RC2=0;
                     _delay((unsigned long)((18000)*(20000000/4000000.0)));
                 }
+                _delay((unsigned long)((1000)*(20000000/4000.0)));
             }
-            CURSOR(0xC0,0);
-            LCDWRITE("phcn");
             _delay((unsigned long)((2500)*(20000000/4000.0)));
             RC3=1;
+# 165 "main.c"
         }else{
             RD2=0;
             if(generatorADCvalue<920){
                 if(generatorON==0){
+                    for(int i=0;i<50;i++){
+                        RC2=1;
+                        _delay((unsigned long)((2000)*(20000000/4000000.0)));
+                        RC2=0;
+                        _delay((unsigned long)((18000)*(20000000/4000000.0)));
+                    }
+                    _delay((unsigned long)((1000)*(20000000/4000.0)));
+                    for(int i=0;i<50;i++){
+                        RC2=1;
+                        _delay((unsigned long)((1500)*(20000000/4000000.0)));
+                        RC2=0;
+                        _delay((unsigned long)((18500)*(20000000/4000000.0)));
+                    }
+                    _delay((unsigned long)((1000)*(20000000/4000.0)));
+                    for(int i=0;i<50;i++){
+                        RC2=1;
+                        _delay((unsigned long)((1000)*(20000000/4000000.0)));
+                        RC2=0;
+                        _delay((unsigned long)((19000)*(20000000/4000000.0)));
+                    }
+                    _delay((unsigned long)((1000)*(20000000/4000.0)));
+
+                    switched=1;
                     RD3=0;
                     RD2=0;
                     RC4=1;
@@ -2160,13 +2199,6 @@ void main(void) {
                     RD3=1;
                     generatorON=1;
                     phcnON=0;
-                    for(int i=0;i<50;i++){
-                        RC2=1;
-                        _delay((unsigned long)((1000)*(20000000/4000000.0)));
-                        RC2=0;
-                        _delay((unsigned long)((19000)*(20000000/4000000.0)));
-                    }
-                    switched=1;
                 }
                 CURSOR(0xC0,0);
                 LCDWRITE("generator");
